@@ -1,0 +1,6 @@
+*.idea
+*bin
+*node_modules
+*public
+*routes
+*app.js.old
