@@ -1,15 +1,16 @@
 {
-  "name": "funnybot",
-  "version": "0.0.0",
+  "name": "bb_funny_bot",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node app.js"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "morgan": "~1.9.1",
+    "node": "^14.0.0",
     "node-telegram-bot-api": "^0.40.0",
     "sqlite-sync": "^0.3.9",
     "telegram-mtproto": "^2.2.2"
