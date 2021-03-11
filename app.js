@@ -1,6 +1,6 @@
 // buffoon_bot
 const TelegramBot = require('node-telegram-bot-api');
-const config = require('./config.json');
+const config = require('./configuration.json');
 const token = config.token;
 const bot = new TelegramBot(token, {polling: true});
 const sqlite = require('sqlite-sync');
