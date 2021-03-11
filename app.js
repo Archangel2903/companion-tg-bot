@@ -52,7 +52,7 @@ const options = {
     }
 };
 const daun = 1128150776;
-const hui = ['ЛОХ', 'иди на хуй', 'присел на бутылку', 'ФУ!!!', 'АтсАси', 'олигафрен', 'чмошник', 'очкошник', 'калл', 'даёт за пивас'];
+const hui = ['ЛОХ', 'иди на хуй', 'присел на бутылку', 'ФУ!!!', 'АтсАси', 'олигафрен', 'чмошник', 'https://natribu.org/', 'очкошник', 'калл', 'даёт за пивас'];
 
 // <a href="tg://user?id=123456789">Name</a>
 
@@ -530,12 +530,6 @@ bot.onText(/\/timer (.+)/gi, function (msg, match) {
     let num = match[1];
     timerUser(num, msg);
 });
-
-/*var nahui = setInterval(function () {
-    let nh = randomTo(hui.length - 1);
-    bot.sendMessage(-1001163726089, '<a href="tg://user?id='+ 1210351347 +'">Алёша</a>, ' + hui[nh], {parse_mode: 'html'});
-    bot.sendMessage(-1001163726089, '<a href="tg://user?id='+ 1128150776 +'">Алёша</a>, ' + hui[nh], {parse_mode: 'html'});
-}, 1000*60);*/
 
 /* ******************************************** */
 
