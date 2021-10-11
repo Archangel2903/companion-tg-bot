@@ -1,3 +1,4 @@
+'use strict'
 // buffoon_bot
 const TelegramBot = require('node-telegram-bot-api');
 const config = require('./configuration.json');
@@ -8,8 +9,7 @@ const sqlite = require('sqlite-sync');
 sqlite.connect('library.db');
 sqlite.run("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id INTEGER NOT NULL, user_id INTEGER NOT NULL UNIQUE, user_name TEXT NOT NULL, user_nick TEXT UNIQUE, coins_value INTEGER NOT NULL, warns INTEGER NOT NULL)",
     function (res) {
-        if (res.error)
-            throw res.error;
+        if (res.error) throw res.error;
         // console.log('users ' + res);
     });
 sqlite.run("CREATE TABLE IF NOT EXISTS titles(id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id INTEGER NOT NULL, user_id INTEGER NOT NULL, user_name TEXT NOT NULL, title TEXT NOT NULL, date TEXT NOT NULL)",
@@ -25,6 +25,8 @@ sqlite.run("CREATE TABLE IF NOT EXISTS times(id INTEGER PRIMARY KEY AUTOINCREMEN
         // console.log('times ' + res);
     });
 
+const CREATOR_ID = +config.creator_id;
+const BOT_CHAT_ID = +'-1001412767338';
 const COMMANDS = {
     START: '\/start',
     CHAT_ADMIN: '\/admins',
@@ -78,9 +80,9 @@ const BUTTONS = {
     }
 };
 
-var USER = {
-    data: false
-}
+/*const USER = {
+    data,
+}*/
 
 // Buttons callback listener
 bot.on('callback_query', (msg) => {
@@ -126,22 +128,14 @@ bot.on('callback_query', (msg) => {
             callback_query_id: msg.id,
             text: data
         });
-    }
-    else return false;
+    } else return false;
 });
 
 // Test
-bot.onText(new RegExp(`${COMMANDS.TEST}`, 'gi'), (msg) => {
-    let {message_id, from: {id}, chat} = msg;
-
-    bot.deleteMessage(chat.id, message_id);
-
-    if (id === +config.creator_id) {
-        if ("reply_to_message" in msg) {
-            console.log(msg);
-
-            bot.sendDocument(chat.id, 'CgACAgQAAx0CVDUeagACF6JgaxuPKoyppEC0li5xN7dpcw7nNQACUgIAAra-NFJOSIcNk_mnlB4E', 'Hello World');
-        }
+bot.onText(new RegExp(`${COMMANDS.TEST}`, 'gi'), ({ message_id, from: {id: uId}, chat: {id: cId} }) => {
+    bot.deleteMessage(cId, message_id);
+    if (uId === CREATOR_ID) {
+        bot.sendMessage(BOT_CHAT_ID, `TeSt`, {parse_mode: 'html'});
     }
 });
 
@@ -149,60 +143,32 @@ bot.onText(new RegExp(`${COMMANDS.TEST}`, 'gi'), (msg) => {
 
 // Bot commands
 // Listener messages
-bot.on('message', (msg) => {
-    let userId = msg.from.id;
-    let userName = msg.from.first_name;
-    let userNick;
-    let chatId = msg.chat.id;
-
+bot.on('message', ({ from: {id: userId, first_name, username = undefined}, chat: {id: chatId, type}, text }, ...rest) => {
     if (!isUserExists(userId)) {
-        if ("username" in msg.from) {
-            userNick = msg.from.username;
-            console.log(userNick);
+        if (typeof username === string && username !== undefined) {
+            addUser(userId, first_name, chatId, first_name);
+            console.log(username);
+        } else {
+            addUser(userId, first_name, chatId, null);
+            console.log(username);
         }
-        addUser(userId, userName, chatId, userNick);
     }
 
-    if (msg.chat.type === 'private' && userId === +config.creator_id) {
+    if (type === 'private' && userId === +config.creator_id) {
         let toChat = '-1001371079286';
-        let text = msg.text;
-
         bot.sendMessage(toChat, text);
     }
 
-    let daun = 1128150776;
+    /*let daun = 1128150776;
     let hui = ['ЛОХ', 'иди на хуй', 'присел на бутылку', 'ФУ!!!', 'АтсАси', 'олигафрен', 'чмошник', 'https://natribu.org/', 'очкошник', 'калл', 'даёт за пивас'];
     if (userId === 1128150776 || userId === 1210351347) {
         let nh = randomTo(hui.length - 1);
 
         bot.sendMessage(chatId, '<a href="tg://user?id=' + userId + '">Алёша</a>, ' + hui[nh], {parse_mode: 'html'});
-    }
+    }*/
 });
 bot.on('new_chat_members', (msg) => newMember(msg));
-bot.on('left_chat_member', (msg) => {
-    let userId = msg.from.id;
-    let userName = msg.from.first_name;
-    let userNick;
-    let chatId = msg.chat.id;
-    let chatTitle = msg.chat.title;
-
-    bot.getChatAdministrators(chatId).then(function (data) {
-        let creatorId = +config.creator_id;
-
-        data.forEach(function (i) {
-            if (i.status === 'creator') {
-                creatorId = i.user.id;
-            }
-            else if (i.status === 'administrator') {
-                bot.sendMessage(i.user.id, '👎🏻 Из чата ' + chatTitle + ' вышел пользователь <a href="tg://user?id=' + userId + '">' + userName + '</a> 👎🏻', {parse_mode: 'html'});
-            }
-        });
-
-        bot.sendMessage(creatorId, '👎🏻 Из чата ' + chatTitle + ' вышел пользователь <a href="tg://user?id=' + userId + '">' + userName + '</a> 👎🏻', {parse_mode: 'html'});
-    });
-
-    bot.sendMessage(chatId, '🙁 Прощай <a href="tg://user?id=' + userId + '">' + userName + '</a> 🙁', {parse_mode: 'html'});
-});
+bot.on('left_chat_member', (msg) => departedUser(msg));
 
 // /start
 bot.onText(new RegExp(`^${COMMANDS.START}$`, 'gi'), (msg) => {
@@ -231,8 +197,8 @@ bot.onText(new RegExp(`^${COMMANDS.START}$`, 'gi'), (msg) => {
 });
 
 // /admins
-bot.onText(new RegExp(`^(${COMMANDS.CHAT_ADMIN}|админы)$`, 'gi'), (msg) => {
-    if (msg.chat.type !== 'private') callAdmins(msg.chat.id);
+bot.onText(new RegExp(`^(${COMMANDS.CHAT_ADMIN}|админы)$`, 'gi'), ({chat: {id, type}}) => {
+    type !== 'private' ? callAdmins(id) : false
 });
 
 // /balance
@@ -260,8 +226,7 @@ bot.onText(new RegExp(`^${COMMANDS.WARN}$`, 'gi'), (msg) => {
         if (msg.reply_to_message.from.id === id) {
             bot.sendMessage(chat.id, 'Нельзя дать предупреждение самому себе');
             return false;
-        }
-        else {
+        } else {
             warn_count += 1;
             sqlite.run("UPDATE users SET `warns` = ? WHERE `user_id` = ?", [warn_count, reply_to_message.from.id]);
             bot.sendMessage(chat.id, `${reply_to_message.from.first_name} получил(а) предупреждение.\n ${warn_count}\\3`);
@@ -269,8 +234,26 @@ bot.onText(new RegExp(`^${COMMANDS.WARN}$`, 'gi'), (msg) => {
             if (warn_count >= 3) {
                 bot.restrictChatMember(chat.id, reply_to_message.from.id, {can_send_message: false, until_date: time});
                 bot.sendMessage(chat.id, `${reply_to_message.from.first_name}, получил(а) мут на 10 минут`);
-            }
-            else {
+                bot.getChatAdministrators(chat.id).then((query) => {
+                    query.forEach((data) => {
+                        if (!data.user.is_bot) {
+                            bot.forwardMessage(data.user.id, reply_to_message.chat.id, reply_to_message.message_id);
+                            bot.sendMessage(data.user.id, `ПРЕДУПРЕЖДЕНИЕ от ${first_name}`, {
+                                reply_markup: {
+                                    inline_keyboard: [
+                                        [{
+                                            text: 'Перейти к сообщению',
+                                            url: `https://t.me/c/${linkChatId}/${reply_to_message.message_id}`
+                                        }]
+                                    ]
+                                }
+                            });
+                        }
+                    });
+                }).catch((err) => {
+                    console.log(err);
+                });
+            } else {
                 bot.getChatAdministrators(chat.id).then((query) => {
                     query.forEach((data) => {
                         if (!data.user.is_bot) {
@@ -292,8 +275,7 @@ bot.onText(new RegExp(`^${COMMANDS.WARN}$`, 'gi'), (msg) => {
                 });
             }
         }
-    }
-    else {
+    } else {
         bot.sendMessage(chat.id, 'Отправьте команду в ответ на сообщение');
     }
 });
@@ -305,8 +287,7 @@ bot.onText(new RegExp(`^${COMMANDS.UNWARN}$`, 'gi'), (msg) => {
     if ("reply_to_message" in msg) {
         if (msg.from.id === from.id) {
             return false;
-        }
-        else {
+        } else {
             bot.getChatMember(chat.id, msg.from.id).then((query) => {
                 switch (query.status) {
                     case 'creator':
@@ -324,8 +305,7 @@ bot.onText(new RegExp(`^${COMMANDS.UNWARN}$`, 'gi'), (msg) => {
                 }
             });
         }
-    }
-    else {
+    } else {
         bot.sendMessage(chat.id, 'Отправьте команду в ответ на сообщение');
     }
 });
@@ -353,8 +333,7 @@ bot.onText(new RegExp(`^${COMMANDS.MUTE} (\\d+)$`, 'gi'), function (msg, match) 
                 console.log(status + ' получил !!мут на ' + value + minutes);
                 textMsg = replyName + ', получил(а) мут на ' + value + minutes + '🙊\n⬇ Сходи в ЛЕС ⬇';
                 bot.restrictChatMember(chatId, replyId, {can_send_message: false, until_date: time});
-            }
-            else {
+            } else {
                 textMsg = '🤖 Нельзя заткнуть Администратора 🤖';
             }
 
@@ -444,21 +423,30 @@ bot.onText(/^(!.+) дня$/gi, (msg, match) => {
                 //(prevTime + 3600000) <= time
 
                 if (true) {
-                    sqlite.insert("titles", {chat_id: chatId, user_id: memberId, user_name: memberName, title: text, date: date});
+                    sqlite.insert("titles", {
+                        chat_id: chatId,
+                        user_id: memberId,
+                        user_name: memberName,
+                        title: text,
+                        date: date
+                    });
                     sqlite.run("UPDATE times SET `title_time` = ? WHERE `chat_id` = ?", [time, chatId]);
                     bot.sendMessage(chatId, text + ' дня у нас <a href="tg://user?id=' + memberId + '">' + memberName + '</a>', {parse_mode: 'html'});
-                }
-                else {
+                } else {
                     bot.sendMessage(chatId, '🤖Выбрать титул дня можно раз в час🤖');
                 }
-            }
-            else {
+            } else {
                 sqlite.insert("times", {chat_id: chatId, title_time: time});
-                sqlite.insert("titles", {chat_id: chatId, user_id: memberId, user_name: memberName, title: text, date: date});
+                sqlite.insert("titles", {
+                    chat_id: chatId,
+                    user_id: memberId,
+                    user_name: memberName,
+                    title: text,
+                    date: date
+                });
                 bot.sendMessage(chatId, text + ' дня у нас <a href="tg://user?id=' + memberId + '">' + memberName + '</a>', {parse_mode: 'html'});
             }
-        }
-        else return false;
+        } else return false;
     }
 });
 
@@ -525,8 +513,7 @@ bot.onText(/^\+(\d+)$/, (msg, match) => {
         if (userCoins < coinsVal) {
             bot.sendMessage(chatId, userName + ', нельзя отдать больше чем имеешь☝🏻');
             return;
-        }
-        else {
+        } else {
             result = userCoins - coinsVal;
             sqlite.run("UPDATE users SET `coins_value` = ? WHERE `user_id` = ?", [result, userId]);
         }
@@ -552,12 +539,10 @@ bot.onText(/^(\+|спасибо|👍🏻)$/gi, (msg) => {
 
         if (userId === replyId) {
             return;
-        }
-        else if (userCoins <= 0) {
+        } else if (userCoins <= 0) {
             bot.sendMessage(chatId, userName + ', нельзя отдать больше чем имеешь☝🏻');
             return;
-        }
-        else {
+        } else {
             result = userCoins - 1;
             sqlite.run("UPDATE users SET `coins_value` = ? WHERE `user_id` = ?", [result, userId]);
         }
@@ -594,15 +579,13 @@ bot.onText(/^-(\d+)$/, (msg, match) => {
         if (coinsVal > Math.floor(replyCoins / 2)) {
             bot.sendMessage(chatId, userName + ', нельзя отнимать больше 50%');
             return;
-        }
-        else if (chance > Math.floor(100 / 2.5)) {
+        } else if (chance > Math.floor(100 / 2.5)) {
             resultMinus = replyCoins - stolenCoins;
             resultPlus = userCoins + stolenCoins;
             sqlite.run("UPDATE users SET `coins_value` = ? WHERE `user_id` = ?", [resultMinus, replyId]);
             sqlite.run("UPDATE users SET `coins_value` = ? WHERE `user_id` = ?", [resultPlus, userId]);
             text = userName + ' отнял 💰' + stolenCoins + '💰\n' + replyName + ' у тебя осталось 💰' + resultMinus + '💰';
-        }
-        else {
+        } else {
             text = userName + ' не смог отнять 💰монеты💰 у ' + replyName;
         }
         bot.sendMessage(chatId, text);
@@ -684,48 +667,74 @@ function isUserExists(uId) {
 
 function addUser(uId, uName, cId) {
     console.log('New user - ' + uName + ' - ' + arguments["3"]);
-    sqlite.insert("users", {user_id: uId, user_name: uName, user_nick: arguments["3"], chat_id: cId, coins_value: 1000, warns: 0}, function (res) {
+    sqlite.insert("users", {
+        user_id: uId,
+        user_name: uName,
+        user_nick: arguments["3"],
+        chat_id: cId,
+        coins_value: 1000,
+        warns: 0
+    }, function (res) {
         if (res.error) {
             throw res.error;
         }
     });
 }
 
-function newMember(data) {
-    let userId = data.new_chat_participant.id;
-    let userName = data.new_chat_participant.first_name;
-    let chatId = data.chat.id;
-    let chatName = data.chat.title;
-    let userNick;
-
+function newMember({ chat: {id: chatId, title}, new_chat_participant: {id: userId, first_name, username = null} }) {
     if (!isUserExists(userId)) {
-        if ("username" in data.new_chat_member) {
-            userNick = data.new_chat_member.username;
-        }
-        addUser(userId, userName, chatId, userNick);
+        addUser(userId, first_name, chatId, username);
     }
 
-    bot.getChatAdministrators(chatId).then((query) => {
-        let creatorId = Number(config.creator_id);
+    bot.getChatAdministrators(chatId)
+        .then((query) => {
+            let creatorId = Number(config.creator_id);
 
-        query.forEach((i) => {
-            if (!i.user.is_bot) {
-                switch (i.status) {
-                    case 'administrator':
-                        bot.sendMessage(i.user.id, '👍🏻 В чат ' + chatName + ' вошёл новый пользователь <a href="tg://user?id=' + userId + '">' + userName + '</a> 👍🏻', {parse_mode: 'html'});
-                        break
-                    default:
-                        creatorId = i.user.id;
-                        break
+            query.forEach((i) => {
+                let {status, user: {is_bot}} = i;
+                if (!is_bot) {
+                    switch (status) {
+                        case 'administrator':
+                            bot.sendMessage(i.user.id, `👍🏻 В чат ${title} вошёл новый пользователь <a href="tg://user?id=${userId}">${first_name}</a> 👍🏻`, {parse_mode: 'html'});
+                            break;
+                        default:
+                            creatorId = i.user.id;
+                            break
+                    }
                 }
-            }
+            });
+
+            bot.sendMessage(creatorId, `👍🏻 В чат ${title} вошёл новый пользователь <a href="tg://user?id=${userId}">${first_name}</a> 👍🏻`, {parse_mode: 'html'});
+        })
+        .catch((err) => {
+            throw err.message;
         });
 
-        bot.sendMessage(creatorId, '👍🏻 В чат ' + chatName + ' вошёл новый пользователь <a href="tg://user?id=' + userId + '">' + userName + '</a> 👍🏻', {parse_mode: 'html'});
-    }).catch((err) => {
-        console.log(err);
-    });
-    bot.sendMessage(chatId, '🙂 Добро пожаловать <a href="tg://user?id=' + userId + '">' + userName + '</a> 🙂', {parse_mode: 'html'});
+    bot.sendMessage(chatId, `🙂 Добро пожаловать <a href="tg://user?id=${userId}">${first_name}</a> 🙂`, {parse_mode: 'html'});
+}
+
+function departedUser({ chat: {id: chatId, title}, left_chat_participant: {id: userId, first_name} }) {
+    bot.getChatAdministrators(chatId)
+        .then(function (data) {
+            let creatorId = CREATOR_ID;
+
+            data.forEach(function (i) {
+                let {status, user: {id}} = i;
+
+                if (status === 'creator') {
+                    creatorId = id;
+                } else if (status === 'administrator') {
+                    bot.sendMessage(id, `👎🏻 Из чата ${title} вышел пользователь <a href="tg://user?id=${userId}">${userName}</a> 👎🏻`, {parse_mode: 'html'});
+                }
+            });
+
+            bot.sendMessage(creatorId, `👎🏻 Из чата ${title} вышел пользователь <a href="tg://user?id=${userId}">${userName}</a> 👎🏻`, {parse_mode: 'html'});
+        })
+        .catch((err) => {
+            throw err.message;
+        });
+
+    bot.sendMessage(chatId, `🙁 Прощай <a href="tg://user?id=${userId}">${first_name}</a> 🙁`, {parse_mode: 'html'});
 }
 
 function callAdmins(chatId) {
@@ -752,9 +761,10 @@ function timerUser(m, msg) {
 }
 
 var loop = 0;
+
 function randomChatMember(chat_id) {
-    var usersChat = sqlite.run("SELECT * FROM users WHERE `chat_id` = ?", [chat_id]);
-    console.log(usersChat.length);
+    const usersChat = sqlite.run("SELECT * FROM users WHERE `chat_id` = ?", [chat_id]);
+    console.log(usersChat);
     var random = randomTo(usersChat.length);
     var randomUser = {
         id: usersChat[random].user_id,
@@ -887,3 +897,5 @@ function getMessage(key) {
     data[0].exists = true;
     return data[0];
 }
+
+
