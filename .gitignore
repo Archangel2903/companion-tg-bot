@@ -1,5 +1,4 @@
 *.idea
-*bin
-*node_modules
-*public
-*routes
+*.env
+*node_modules/
+*old/
