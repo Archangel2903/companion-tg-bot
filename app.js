@@ -1,9 +1,10 @@
 'use strict'
+
 const ENV = require('dotenv').config();
 const openai_key = process.env.OPENAI_KEY;
 const bot_token = process.env.BOT_TOKEN;
 const weather_api_key = process.env.WEATHER_API_KEY;
-const creatorId = process.env.CREATOR_ID;
+const creator_id = process.env.CREATOR_ID;
 
 const telegram_bot = require('node-telegram-bot-api');
 const sqlite = require('sqlite-sync');
@@ -22,7 +23,7 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
 });
 
-const { WEATHER } = require('./src/const/commands');
+const {getWeather} = require('./src/utils/getWeather');
 const command_action = {
     openai_handler: true,
     listenerCMD: require('./src/commands/listener'),
@@ -31,10 +32,10 @@ const command_action = {
     wordCMD: require('./src/commands/word'),
     infoCMD: require('./src/commands/info'),
     testCMD: require('./src/commands/test'),
-    command_init: function() {
+    command_init: function () {
         this.listenerCMD(bot);
         this.startCMD(bot);
-        // this.weatherCMD(bot);
+        this.weatherCMD(bot);
         this.wordCMD(bot);
         this.infoCMD(bot);
         this.testCMD(bot);
@@ -88,24 +89,6 @@ bot.onText(new RegExp('^!\(.+\)', 'gi'), async (msg, match) => {
     }
 });
 
-// WEATHER
-bot.onText(new RegExp(`${WEATHER} (.+)`, 'gi'), async (msg, match) => {
-    const {from: {language_code: lang}, chat: {id}} = msg;
-    const city = match[1];
-    const weather = await getWeather(city, lang);
-    bot.sendMessage(id, weather);
-});
-
-// Получение прогноза погоды
-async function getWeather(city, lang) {
-    const url = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${weather_api_key}&units=metric&lang=${lang}`;
-    const res = await axios.get(url);
-    const data = res.data;
-    const weather = data.weather[0].description;
-    const temp = data.main.temp;
-    return `Погода в городе ${city}: ${weather}, температура ${temp} градусов Цельсия.`;
-}
-
 // Создаем задачу для напоминания каждый день в 9 утра
 const job = new CronJob('0 9 * * *', async function () {
     const chatId = '-1001902435375';
@@ -113,9 +96,11 @@ const job = new CronJob('0 9 * * *', async function () {
     const lang = 'uk';
     const weatherMsg = await getWeather(city, lang);
 
-    bot.sendMessage(chatId, '<a href="tg://user?id=774264924">Маx</a> у тебе чудова пам\'ять', {parse_mode: 'html'});
+    // bot.sendMessage(chatId, '<a href="tg://user?id=774264924">Маx</a> ', {parse_mode: 'html'});
     bot.sendMessage(chatId, weatherMsg);
 }, null, true, 'Europe/Kiev');
 
 // Запускаем задачу
 job.start();
+
+// process.exit();
