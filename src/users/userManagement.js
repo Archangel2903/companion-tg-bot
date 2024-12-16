@@ -1,6 +1,7 @@
-const config = require('../../configuration.json')
+require('dotenv').config();
 const {sqlite, query} = require('../database/db');
 const {log} = require('../utils/helpers');
+const creatorId = parseInt(process.env.CREATOR_ID, 10);
 
 function messageListener(bot) {
     bot.on('message', (msg) => {
@@ -9,24 +10,18 @@ function messageListener(bot) {
 
         console.log(`${title}: [${first_name}] - ${text}`);
 
-        if (msg.dice) {
-            if (msg.dice.value > 4) {
-                bot.sendMessage(msg.chat.id, `Молодец, отличный результат ${msg.dice.value}`);
-            }
-            else {
-                bot.sendMessage(msg.chat.id, `${msg.dice.value}, в следующий раз повезёт`);
-            }
-        }
+
 
         if (!isUserExists(user_id)) {
             addUser(user_id, first_name, username);
             log('INFO')(`Пользователь ${first_name} добавлен в таблицу users`);
         }
 
-        if (type === 'private' && user_id === +config.creator_id) {
-            if (msg.entities[0].type !== 'bot_command') {
-                let toChat = '-1002418775017';
-                bot.sendMessage(toChat, text);
+        if (type === 'private' && user_id === creatorId) {
+            if (!msg.entities) {
+                bot.sendMessage(-1002418775017, text);
+                bot.sendMessage(-1001163726089, text);
+                bot.sendMessage(-1001371079286, text);
             }
         }
     });

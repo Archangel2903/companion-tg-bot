@@ -128,7 +128,7 @@ function aliasStart(bot) {
                     });
                     giveCoins(gameState.currentLeader, 10);
                     gameState.currentLeader = null;
-                    addRating(chat_id, user_id, first_name, gameState);
+                    addUserRating(chat_id, user_id, first_name, gameState);
                     giveCoins(user_id, 10);
                 } else if (gameState.currentLeader === user_id) {
                     // Если ведущий назвал правильное слово
@@ -144,7 +144,7 @@ function aliasStart(bot) {
 function aliasEnd(bot, chatId = null) {
     if (chatId) {
         chatGame[chatId] = null
-        bot.sendMessage(chatId, messages.noGame);
+        bot.sendMessage(chatId, messages.endGame);
     }
     else {
         bot.onText(/^\/endAlias/gi, (msg) => {
@@ -186,7 +186,7 @@ function takeCoins(userId, x) {
     query("UPDATE users SET `user_coins` = ? WHERE `user_id` = ?", [update_coins, userId]);
 }
 
-function addRating(chatId, userId, userName, gameState) {
+function addUserRating(chatId, userId, userName, gameState) {
     // Проверяем, есть ли пользователь в текущем чате
     const userInChat = isUserInChatRating(chatId, userId);
 
@@ -196,9 +196,9 @@ function addRating(chatId, userId, userName, gameState) {
         const userInOtherChat = query("SELECT * FROM words_top WHERE user_id = ?", [userId]);
 
         if (userInOtherChat.length > 0) {
-            query("INSERT INTO words_top (chat_id, user_id, user_name, rating) VALUES (?, ?, ?, 1)", [chatId, userId, userName]);
+            query("INSERT INTO words_top (chat_id, user_id, user_name, rating) VALUES (?, ?, ?, ?)", [chatId, userId, userName, 1]);
         } else {
-            query("INSERT INTO words_top (chat_id, user_id, user_name, rating) VALUES (?, ?, ?, 1)", [chatId, userId, userName]);
+            query("INSERT INTO words_top (chat_id, user_id, user_name, rating) VALUES (?, ?, ?, ?)", [chatId, userId, userName, 1]);
         }
     }
 }
