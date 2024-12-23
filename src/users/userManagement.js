@@ -10,8 +10,6 @@ function messageListener(bot) {
 
         console.log(`${title}: [${first_name}] - ${text}`);
 
-
-
         if (!isUserExists(user_id)) {
             addUser(user_id, first_name, username);
             log('INFO')(`Пользователь ${first_name} добавлен в таблицу users`);
@@ -33,10 +31,37 @@ function addUser(uId, uName, username, coinValue = 100) {
             throw res.error;
         }
     });
+    log('INFO')(`Пользователь ${uName} добавлен в таблицу users`);
 }
 
 function isUserExists(uId) {
     return query("SELECT COUNT(*) as cnt FROM users WHERE `user_id` = ?", [uId])[0].cnt !== 0;
 }
 
-module.exports = {messageListener, addUser, isUserExists}
+function currentUserCoins(userId) {
+    return query(`SELECT user_coins FROM users WHERE user_id = ?`, [userId])[0].user_coins;
+}
+
+function updateUserCoins(userId, x) {
+    query("UPDATE users SET user_coins = ? WHERE `user_id` = ?", [x, userId]);
+}
+
+function giveUserCoins(userId, x) {
+    const userCoins = currentUserCoins(userId);
+    const result = Number(userCoins) + Number(x);
+    updateUserCoins(userId, result);
+}
+
+function takeUserCoins(userId, x) {
+    const userCoins = currentUserCoins(userId);
+    const result = Number(userCoins) - Number(x);
+
+    if (result > 0) {
+        updateUserCoins(userId, result);
+    }
+    else {
+        updateUserCoins(userId, 0);
+    }
+}
+
+module.exports = {messageListener, currentUserCoins, giveUserCoins, takeUserCoins, addUser, isUserExists}

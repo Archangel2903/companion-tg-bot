@@ -2,4 +2,10 @@ function log(title) {
     return (msg) => console.log(`[${title}]: ${msg}`);
 }
 
-module.exports = { log }
+function init(bot, fns) {
+    fns.forEach((fn) => {
+        fn(bot);
+    });
+}
+
+module.exports = { init, log }

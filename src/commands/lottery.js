@@ -14,7 +14,7 @@ function lottery(bot) {
                 bot.sendMessage(chat_id, `Молодец, отличный результат ${value}`);
             }
             else if (value > 4 && value < 44) {
-                bot.sendMessage(chat_id, `Молодец, хороший результат результат ${value}`);
+                bot.sendMessage(chat_id, `Молодец, хороший ре зультат результат${value}`);
             }
             else {
                 bot.sendMessage(chat_id, `${value}, в следующий раз повезёт`);
