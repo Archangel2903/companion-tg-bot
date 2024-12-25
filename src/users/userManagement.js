@@ -17,12 +17,42 @@ function messageListener(bot) {
 
         if (type === 'private' && user_id === creatorId) {
             if (!msg.entities) {
-                bot.sendMessage(-1002418775017, text);
-                bot.sendMessage(-1001163726089, text);
-                bot.sendMessage(-1001371079286, text);
+                console.log(`message to chats from creator`, msg);
+                // bot.sendMessage(-1002418775017, text);
+                // bot.sendMessage(-1001163726089, text);
+                // bot.sendMessage(-1001371079286, text);
             }
         }
+
+        lottery(msg);
     });
+
+    function lottery(msg) {
+        const {chat: {id: chat_id}, from: {id: user_id}} = msg;
+
+        if ('dice' in msg) {
+            const {dice: {value}} = msg;
+            let message = ''
+
+            if(value >= 60) {
+                message = `Прекрасный результат ${value}`;
+                giveUserCoins(user_id, 100);
+            }
+            else if (value > 44 && value < 60) {
+                message = `Молодец, отличный результат ${value}`;
+                giveUserCoins(user_id, 50);
+            }
+            else if (value > 4 && value < 44) {
+                message = `Молодец, хороший ре зультат результат ${value}`;
+                giveUserCoins(user_id, 10);
+            }
+            else {
+                message = `${value}, в следующий раз повезёт`;
+            }
+
+            bot.sendMessage(chat_id, message);
+        }
+    }
 }
 
 function addUser(uId, uName, username, coinValue = 100) {

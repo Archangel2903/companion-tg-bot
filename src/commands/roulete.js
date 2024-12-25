@@ -77,6 +77,8 @@ function roulette(bot) {
         const position = match[2] === 'к' ? 'red' : match[2] === 'ч' ? 'black' : parseInt(match[2]);
         let textMessage = ``;
 
+        console.log(`position`, position, typeof position);
+
         switch (position) {
             case 'red':
                 textMessage = `Ваша ставка принята: ${amount} на ${message.red}`;
@@ -85,10 +87,10 @@ function roulette(bot) {
                 textMessage = `Ваша ставка принята: ${amount} на ${message.black}`;
                 break;
             case 0:
-                textMessage = `Ваша ставка принята: ${amount} на ${message.green}`;
+                textMessage = `Ваша ставка принята: ${amount} на ${position}${message.green}`;
                 break;
             default:
-                textMessage = `Ваша ставка принята: ${amount} на ${position}`;
+                textMessage = `Ваша ставка принята: ${amount} на ${position}${message}`;
                 break;
         }
 
@@ -96,7 +98,8 @@ function roulette(bot) {
             takeUserCoins(user_id, amount);
             bet(gameState, {'firstname': first_name, 'user_id': user_id, 'amount': amount, 'position': position});
             bot.sendMessage(chat_id, textMessage);
-        } else {
+        }
+        else {
             bot.sendMessage(chat_id, 'Ставки не принимаются');
         }
     });
@@ -139,7 +142,7 @@ function roulette(bot) {
                     }
 
                     removeGameState(chat_id);
-                }, 3000);
+                }, 6000);
             });
     }
 }
@@ -174,143 +177,3 @@ function determineWinner(result, bets) {
 }
 
 module.exports = {roulette};
-
-/*
-function placeBet(userId, userName, amount, position) {
-    bets.push({userId, userName, amount, position});
-}
-
-function spinRoulette() {
-    const randomIndex = Math.floor(Math.random() * rouletteNumbers.length);
-    return rouletteNumbers[randomIndex];
-}
-
-function determineWinners(result) {
-    return bets.filter(bet => {
-        return bet.position === result.number || bet.position === result.color;
-    });
-}
-
-function resetBets() {
-    bets.length = 0;
-}
-
-function roulette(bot) {
-    bot.onText(/^\/roulette/gi, (msg) => {
-        const {chat: {id: chat_id}} = msg;
-
-        chatGame.set(chat_id, {
-            gameOn: true,
-            openBets: true,
-            bets: [],
-        })
-        const gameState = chatGame.get(chat_id);
-
-        bot.sendDocument(chat_id, message.rouletteBets, {caption: message.gameStart});
-
-        // Запускаем таймер на 2 минуты
-        setTimeout(() => {
-            gameState.openBets = false;
-            bot.sendMessage(chat_id, message.closeBets, {
-                reply_markup: {
-                    inline_keyboard: [[{
-                        text: 'Крутить',
-                        callback_data: `spin${chat_id}`,
-                    }]]
-                }
-            });
-        }, 60000); // 2 минуты = 120000 миллисекунд
-    });
-
-    bot.onText(/^(\d+) (ч|к|\d+)$/i, (msg, match) => {
-        const {from: {id: user_id}, chat: {id: chat_id}} = msg;
-        const amount = parseInt(match[1]);
-        const position = match[2] === 'к' ? 'red' : match[2] === 'ч' ? 'black' : parseInt(match[2]);
-        const gameState = chatGame.get(chat_id);
-        if (!gameState.gameOn) return;
-        let textMessage = `Ваша ставка принята: ${amount} на ${position}`;
-
-        switch (position) {
-            case 'red':
-                textMessage = `Ваша ставка принята: ${amount} на 🔴`;
-                break;
-            case 'black':
-                textMessage = `Ваша ставка принята: ${amount} на ⚫️`;
-                break;
-            case 0:
-                textMessage = `Ваша ставка принята: ${amount} на 🟢`;
-                break;
-            default:
-                textMessage = `Ваша ставка принята: ${amount} на ${position}`;
-                break;
-        }
-
-        if (gameState.openBets) {
-            takeUserCoins(user_id, amount);
-            placeBet(user_id, amount, position);
-            bot.sendMessage(chat_id, textMessage);
-        } else {
-            bot.sendMessage(chat_id, 'Ставки не принимаются');
-        }
-    });
-
-    bot.onText(/^\/spin/gi, (msg) => {
-        const {chat: {id: chat_id}} = msg;
-        const gameState = chatGame.get(chat_id);
-        const result = spinRoulette();
-
-        bot.sendDocument(chat_id, message.rouletteSpinner)
-            .then(() => {
-                setTimeout(() => {
-                    bot.sendMessage(chat_id, `Результат: ${result.number} (${message[result.color]})`)
-                        .then(() => {
-                            const winners = determineWinners(result);
-
-                            if (winners.length > 0) {
-                                winners.forEach(winner => {
-                                    bot.sendMessage(chat_id, `Победитель: ${winner.userId} выиграл ${winner.amount * 2}`);
-                                });
-                            } else {
-                                bot.sendMessage(chat_id, 'К сожалению, никто не выиграл.');
-                            }
-
-                            // Сбрасываем ставки после расчета результатов
-                            resetBets();
-                        });
-                }, 5000); // Задержка 5 секунд для имитации вращения
-            });
-
-        // bot.editMessageReplyMarkup({inline_keyboard: []}, {chat_id, message_id});
-    });
-
-    bot.on('callback_query', (callbackQuery) => {
-        const {id, message: {chat: {id: chat_id}, message_id}} = callbackQuery;
-
-        if (callbackQuery.data === `spin${chat_id}`) {
-            const result = spinRoulette();
-            const color = result.color === 'red' ? '' :
-                bot.sendDocument(chat_id, message.rouletteSpinner)
-                    .then(() => {
-                        setTimeout(() => {
-                            bot.sendMessage(chat_id, `Результат: ${result.number} (${result.color})`).then(() => {
-                                const winners = determineWinners(result);
-
-                                if (winners.length > 0) {
-                                    console.log(`winners:`, winners, typeof winners);
-                                    let winnersList = winners.reduce((acc, i) => acc += `${i}\n`, '');
-                                    console.log(`winners list:`, winnersList, typeof winnersList);
-                                    bot.sendMessage(chat_id, `Победители: \n${winner.userId} выиграл ${winner.amount * 2}`)
-                                } else {
-                                    bot.sendMessage(chat_id, 'К сожалению, никто не выиграл.');
-                                }
-
-                                // Сбрасываем ставки после расчета результатов
-                                resetBets();
-                            });
-                        }, 3000);
-                    });
-
-            bot.editMessageReplyMarkup({inline_keyboard: []}, {chat_id, message_id});
-        }
-    });
-}*/

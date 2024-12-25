@@ -1,9 +1,10 @@
 'use strict'
 // buffoon_bot
-require('dotenv').config();
+const ENV = require('dotenv').config();
 const token = process.env.TOKEN;
 const weatherApiKey = process.env.WEATHER_API_KEY;
 const creatorId = Number(process.env.CREATOR_ID);
+const openai_key = process.env.OPENAI_KEY;
 
 const TelegramBot = require('node-telegram-bot-api');
 const bot = new TelegramBot(token, {polling: true});
@@ -34,15 +35,13 @@ const {mute, warn} = require('./src/chat/chatManagement');
 
 const {startCommand} = require('./src/commands/start');
 const {balance} = require('./src/commands/balance');
-const {lottery} = require('./src/commands/lottery');
 
 const {aliasStart, aliasEnd, aliasRating, handleAliasMessage, handleAliasButton} = require('./src/commands/alias');
 const {roulette} = require('./src/commands/roulete');
 const {test} = require('./src/commands/test');
+// const {gpt} = require('./src/commands/gpt');
 
 initializeTable();
-
-getWeather(bot, weatherApiKey);
 
 const commands = [
     messageListener,
@@ -56,12 +55,14 @@ const commands = [
     aliasRating,
     handleAliasMessage,
     handleAliasButton,
-    lottery,
     roulette,
 ];
 
 init(bot, commands);
+getWeather(bot, weatherApiKey);
 test(bot, creatorId);
+// gpt(bot, openai_key, creatorId);
+
 
 bot.on('polling_error', (error) => {
     console.error(error);
