@@ -27,6 +27,9 @@ function messageListener(bot) {
         lottery(msg);
     });
 
+    bot.on('new_chat_members', (msg) => newMember(msg));
+    bot.on('left_chat_member', (msg) => departedUser(msg));
+
     function lottery(msg) {
         const {chat: {id: chat_id}, from: {id: user_id}} = msg;
 
@@ -92,6 +95,59 @@ function takeUserCoins(userId, x) {
     else {
         updateUserCoins(userId, 0);
     }
+}
+
+function newMember(msg) {
+    const { chat: {id: chatId, title}, new_chat_participant: {id: userId, first_name, username = null} } = msg;
+    if (!isUserExists(userId)) {
+        addUser(userId, first_name, chatId, username);
+    }
+
+    bot.getChatAdministrators(chatId)
+        .then((query) => {
+            query.forEach((i) => {
+                let {status, user: {id: user_id, is_bot}} = i;
+                if (!is_bot) {
+                    switch (status) {
+                        case 'administrator':
+                            bot.sendMessage(user_id, `👍🏻 В чат ${title} вошёл новый пользователь <a href="tg://user?id=${userId}">${first_name}</a> 👍🏻`, {parse_mode: 'html'});
+                            break;
+                        default:
+                            creatorId = i.user.id;
+                            break;
+                    }
+                }
+            });
+
+            bot.sendMessage(creatorId, `👍🏻 В чат ${title} вошёл новый пользователь <a href="tg://user?id=${userId}">${first_name}</a> 👍🏻`, {parse_mode: 'html'});
+        })
+        .catch((err) => {
+            throw err.message;
+        });
+
+    bot.sendMessage(chatId, `🙂 Добро пожаловать <a href="tg://user?id=${userId}">${first_name}</a> 🙂`, {parse_mode: 'html'});
+}
+
+function departedUser({ chat: {id: chatId, title}, left_chat_participant: {id: userId, first_name} }) {
+    bot.getChatAdministrators(chatId)
+        .then(function (data) {
+            data.forEach(function (i) {
+                let {status, user: {id}} = i;
+
+                if (status === 'creator') {
+                    creatorId = id;
+                } else if (status === 'administrator') {
+                    bot.sendMessage(id, `👎🏻 Из чата ${title} вышел пользователь <a href="tg://user?id=${userId}">${userName}</a> 👎🏻`, {parse_mode: 'html'});
+                }
+            });
+
+            bot.sendMessage(creatorId, `👎🏻 Из чата ${title} вышел пользователь <a href="tg://user?id=${userId}">${userName}</a> 👎🏻`, {parse_mode: 'html'});
+        })
+        .catch((err) => {
+            throw err.message;
+        });
+
+    bot.sendMessage(chatId, `🙁 Прощай <a href="tg://user?id=${userId}">${first_name}</a> 🙁`, {parse_mode: 'html'});
 }
 
 module.exports = {messageListener, currentUserCoins, giveUserCoins, takeUserCoins, addUser, isUserExists}

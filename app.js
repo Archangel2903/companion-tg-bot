@@ -33,11 +33,13 @@ const {messageListener} = require('./src/users/userManagement');
 const {callAdmins} = require('./src/commands/admins');
 const {mute, warn} = require('./src/chat/chatManagement');
 
+// В стартовую команду нужно добавлять описание новых функций
 const {startCommand} = require('./src/commands/start');
-const {balance} = require('./src/commands/balance');
 
+const {balance} = require('./src/commands/balance');
 const {aliasStart, aliasEnd, aliasRating, handleAliasMessage, handleAliasButton} = require('./src/commands/alias');
 const {roulette} = require('./src/commands/roulete');
+const {hilo} = require('./src/commands/hilo');
 const {test} = require('./src/commands/test');
 // const {gpt} = require('./src/commands/gpt');
 
@@ -45,10 +47,10 @@ initializeTable();
 
 const commands = [
     messageListener,
-    mute,
-    warn,
+    // mute,
+    // warn,
     startCommand,
-    callAdmins,
+    // callAdmins,
     balance,
     aliasStart,
     aliasEnd,
@@ -56,6 +58,7 @@ const commands = [
     handleAliasMessage,
     handleAliasButton,
     roulette,
+    hilo,
 ];
 
 init(bot, commands);
