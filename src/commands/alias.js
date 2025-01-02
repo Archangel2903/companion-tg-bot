@@ -19,7 +19,7 @@ const messages = {
 
 function aliasStart(bot) {
     // Стартовая команда
-    bot.onText(/^\/startAlias/gi, (msg) => {
+    bot.onText(/^\/alias/gi, (msg) => {
         try {
             if (msg.chat.type === 'group' || msg.chat.type === 'supergroup') {
                 const {chat: {id: chat_id}} = msg;
@@ -40,6 +40,9 @@ function aliasStart(bot) {
                         inline_keyboard: [[{
                             text: 'Стать ведущим',
                             callback_data: `become_leader_${chat_id}`
+                        }], [{
+                            text: 'Правила',
+                            callback_data: 'rule'
                         }]]
                     }
                 });
@@ -116,6 +119,9 @@ function handleAliasButton(bot) {
                             callback_data: `become_leader_${chat_id}`
                         }]]
                     }, {chat_id, message_id});
+                    break;
+                case `rule`:
+                    bot.sendMessage(chat_id, messages.rules, {parse_mode: 'html'});
                     break;
                 default:
                     bot.answerCallbackQuery(id, {text: 'Неверное действие.'});

@@ -1,3 +1,7 @@
+const emoji = {
+    coin: '🪙'
+}
+
 function log(title) {
     return (msg) => console.log(`[${title}]: ${msg}`);
 }

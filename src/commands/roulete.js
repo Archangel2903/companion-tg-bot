@@ -1,4 +1,4 @@
-const {giveUserCoins, takeUserCoins} = require('../users/userManagement');
+const {giveUserCoins, takeUserCoins, currentUserCoins} = require('../users/userManagement');
 
 const rouletteNumbers = [
     {number: 0, color: 'green'},
@@ -49,19 +49,21 @@ const message = {
     red: '🔴',
     green: '🟢',
     rules: `<b>Игра в рулетку</b>\n
--Делайте ставку на Красное 🔴, Черное ⚫️или любое число [0-36]\n
--Пример ставки "10 ч" - 10 монеток на черное\n
--После запуска игры /roulette даётся 1 минута на приём ставок, после чего рулетка будет сыграна и определены победители\n`,
+Делайте ставку на Красное 🔴, Черное ⚫️или любое число [0-36]\n
+Пример ставки "10 ч" - 10 монеток на черное
+После запуска игры /roulette даётся 1 минута на приём ставок, 
+после чего рулетка будет сыграна и определены победители`,
 }
 
 function roulette(bot) {
     bot.onText(/^\/roulette/gi, (msg) => {
         const {chat: {id: chat_id}} = msg;
-
-        createGameState(chat_id);
         const gameState = getGameState(chat_id);
 
-        startAction(msg, gameState);
+        if (!gameState) {
+            createGameState(chat_id);
+            startAction(msg);
+        }
     });
 
     bot.onText(/^\/ruleRoulette/gi, (msg) => {
@@ -75,9 +77,8 @@ function roulette(bot) {
         if (!gameState) return;
         const amount = parseInt(match[1]);
         const position = match[2] === 'к' ? 'red' : match[2] === 'ч' ? 'black' : parseInt(match[2]);
+        const userCoins = currentUserCoins(user_id);
         let textMessage = ``;
-
-        console.log(`position`, position, typeof position);
 
         switch (position) {
             case 'red':
@@ -87,25 +88,37 @@ function roulette(bot) {
                 textMessage = `Ваша ставка принята: ${amount} на ${message.black}`;
                 break;
             case 0:
-                textMessage = `Ваша ставка принята: ${amount} на ${position}${message.green}`;
+                textMessage = `Ваша ставка принята: ${amount} на ${position} ${message.green}`;
                 break;
             default:
-                textMessage = `Ваша ставка принята: ${amount} на ${position}${message}`;
+                rouletteNumbers.forEach((num) => {
+                    let {number, color} = num;
+                    if (number === position) {
+                        textMessage = `Ваша ставка принята: ${amount} на ${position} ${message[color]}`
+                    }
+                });
                 break;
         }
 
         if (gameState.openBets) {
-            takeUserCoins(user_id, amount);
-            bet(gameState, {'firstname': first_name, 'user_id': user_id, 'amount': amount, 'position': position});
-            bot.sendMessage(chat_id, textMessage);
+            if (userCoins - amount >= 0) {
+                takeUserCoins(user_id, amount);
+                bet(gameState, {'firstname': first_name, 'user_id': user_id, 'amount': amount, 'position': position});
+                bot.sendMessage(chat_id, textMessage);
+            }
+            else {
+                bot.sendMessage(chat_id, 'У вас не хватает монеток для ставки');
+            }
         }
         else {
             bot.sendMessage(chat_id, 'Ставки не принимаются');
         }
     });
 
-    function startAction(msg, state) {
+    function startAction(msg) {
         const {chat: {id: chat_id}} = msg;
+        const state = getGameState(chat_id);
+
         bot.sendDocument(chat_id, message.gifBet, {caption: message.gameStart})
             .then(data => {
                 const {message_id, chat: {id: chat_id}} = data;
