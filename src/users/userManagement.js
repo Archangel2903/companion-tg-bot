@@ -115,14 +115,12 @@ function currentUserCoins(userId) {
 }
 
 function updateUserCoins(userId, x) {
-    console.log(`update user coins. Update val:`, x);
     query("UPDATE users SET user_coins = ? WHERE `user_id` = ?", [x, userId]);
 }
 
 function giveUserCoins(userId, x) {
     const userCoins = currentUserCoins(userId);
     const result = Number(userCoins) + Number(x);
-    console.log(`give user coins`, `give ${x}`);
     updateUserCoins(userId, result);
 }
 
@@ -131,7 +129,6 @@ function takeUserCoins(userId, x) {
     const result = Number(userCoins) - Number(x);
 
     if (result >= 0) {
-        console.log(`take user coins`, `take ${x}`);
         updateUserCoins(userId, result);
     }
 }
