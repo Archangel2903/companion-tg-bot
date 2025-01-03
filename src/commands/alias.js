@@ -21,11 +21,10 @@ function aliasStart(bot) {
     // Стартовая команда
     bot.onText(/^\/alias/gi, (msg) => {
         try {
-            if (msg.chat.type === 'group' || msg.chat.type === 'supergroup') {
-                const {chat: {id: chat_id}} = msg;
-
+            const {chat: {id: chat_id, type}} = msg;
+            if (type === 'group' || type === 'supergroup') {
                 if (chatGame.has(chat_id)) {
-                    bot.sendMessage(chatId, messages.gameStarted);
+                    bot.sendMessage(chat_id, messages.gameStarted);
                     return;
                 }
 
