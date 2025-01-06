@@ -11,7 +11,7 @@ function messageListener(bot) {
         console.log(`${title}: [${first_name}] - ${text}`);
 
         if (!isUserExists(user_id)) {
-            addUser(user_id, first_name, username);
+            addUser(user_id, first_name, username, 100);
         }
 
         if (type === 'private' && user_id === creatorId) {
@@ -57,7 +57,7 @@ function messageListener(bot) {
         const messageWelcome = `🙂 Добро пожаловать <a href="tg://user?id=${userId}">${first_name}</a> 🙂`;
 
         if (!isUserExists(userId)) {
-            addUser(userId, first_name, chatId, username);
+            addUser(userId, first_name, username, 100);
         }
 
         bot.getChatAdministrators(chatId)

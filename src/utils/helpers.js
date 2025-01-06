@@ -1,5 +1,15 @@
 const emoji = {
-    coin: '🪙'
+    coin: '🪙',
+    like: '👍',
+    dislike: '👎',
+    info: 'ℹ️',
+    arrow_up: '🔼',
+    arrow_down: '🔽',
+    money: '💰',
+    scroll: '📜',
+    circle_red: '🔴',
+    circle_green: '🟢',
+    circle_black: '⚫️',
 }
 
 function log(title) {
@@ -12,4 +22,4 @@ function init(bot, fns) {
     });
 }
 
-module.exports = { init, log }
+module.exports = { init, log, emoji }

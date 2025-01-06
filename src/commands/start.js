@@ -15,11 +15,12 @@ function startCommand(bot) {
 /startAlias - Начать игру в Alias.
 /endAlias - Завершить игру в Alias.
 /ruleRoulette - Правила игры в рулетку.
-/roulette - Запустить рулетку.`
+/roulette - Запустить рулетку.
+/hilo - Игра в "больше меньше"`
 
         bot.sendMessage(chat_id, msgText, {parse_mode: 'html'});
         if (!isUserExists(user_id)) {
-            addUser(user_id, first_name, username);
+            addUser(user_id, first_name, username, 100);
         }
     });
 }

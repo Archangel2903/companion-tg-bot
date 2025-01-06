@@ -41,6 +41,7 @@ const {startCommand} = require('./src/commands/start');
 const {balance} = require('./src/commands/balance');
 const {aliasStart, aliasEnd, aliasRating, handleAliasMessage, handleAliasButton} = require('./src/commands/alias');
 const {roulette} = require('./src/commands/roulete');
+const {scramble} = require('./src/commands/scramble');
 const {hilo} = require('./src/commands/hilo');
 const {test} = require('./src/commands/test');
 // const {gpt} = require('./src/commands/gpt');
@@ -59,6 +60,7 @@ const commands = [
     aliasRating,
     handleAliasMessage,
     handleAliasButton,
+    scramble,
     roulette,
     hilo,
 ];

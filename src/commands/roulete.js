@@ -1,4 +1,5 @@
 const {giveUserCoins, takeUserCoins, currentUserCoins} = require('../users/userManagement');
+const {emoji} = require('../utils/helpers');
 
 const rouletteNumbers = [
     {number: 0, color: 'green'},
@@ -45,9 +46,6 @@ const message = {
     closeBets: 'ℹ️Ставки больше не принимаются!ℹ️',
     gifBet: 'CgACAgQAAx0CUbkCdgABDQReZ2c5_xGDzcX5G9mVfZvWj7iU1xQAAiUDAAKO4QRTlXm9o9WNDKQ2BA',
     gifSpin: 'CgACAgQAAx0CUbkCdgABDQGpZ14JHEAx1GgsS0aL09u-GAnnG2AAAjEDAAJs-wVTcxdLMgqBtaM2BA',
-    black: '⚫️',
-    red: '🔴',
-    green: '🟢',
     rules: `<b>Игра в рулетку</b>\n
 Делайте ставку на Красное 🔴, Черное ⚫️или любое число [0-36]\n
 Пример ставки "10 ч" - 10 монеток на черное
@@ -82,19 +80,19 @@ function roulette(bot) {
 
         switch (position) {
             case 'red':
-                textMessage = `Ваша ставка принята: ${amount} на ${message.red}`;
+                textMessage = `Ваша ставка принята: ${amount} на ${emoji.circle_red}`;
                 break;
             case 'black':
-                textMessage = `Ваша ставка принята: ${amount} на ${message.black}`;
+                textMessage = `Ваша ставка принята: ${amount} на ${emoji.circle_black}`;
                 break;
             case 0:
-                textMessage = `Ваша ставка принята: ${amount} на ${position} ${message.green}`;
+                textMessage = `Ваша ставка принята: ${amount} на ${position} ${emoji.circle_green}`;
                 break;
             default:
                 rouletteNumbers.forEach((num) => {
                     let {number, color} = num;
                     if (number === position) {
-                        textMessage = `Ваша ставка принята: ${amount} на ${position} ${message[color]}`
+                        textMessage = `Ваша ставка принята: ${amount} на ${position} ${emoji[`circle_${color}`]}`
                     }
                 });
                 break;
@@ -148,10 +146,10 @@ function roulette(bot) {
                         const winnersList = winners.reduce((acc, winner) => {
                             return acc += `${winner.firstname} выигрывает - ${winner.amount * 2}\n`;
                         }, '');
-                        bot.sendMessage(chat_id, `Выиграло ${spinResult.number} ${message[spinResult.color]}\n\nПобедители:\n${winnersList}`);
+                        bot.sendMessage(chat_id, `Выиграло ${spinResult.number} ${emoji[`circle_${spinResult.color}`]}\n\nПобедители:\n${winnersList}`);
                     }
                     else {
-                        bot.sendMessage(chat_id, `Выиграло ${spinResult.number} ${message[spinResult.color]}\nНикто не выиграл`);
+                        bot.sendMessage(chat_id, `Выиграло ${spinResult.number} ${emoji[`circle_${spinResult.color}`]}\nНикто не выиграл`);
                     }
 
                     removeGameState(chat_id);

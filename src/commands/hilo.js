@@ -1,4 +1,5 @@
-const { giveUserCoins, takeUserCoins } = require('../users/userManagement')
+const {giveUserCoins, takeUserCoins} = require('../users/userManagement');
+const {emoji} = require('../utils/helpers');
 
 const chatGame = new Map();
 
@@ -18,11 +19,11 @@ function hilo(bot) {
                 reply_markup: {
                     inline_keyboard: [
                         [{
-                            text: '🔼Больше🔼',
-                            callback_data: `hilo_over_${chat_id}`
+                            text: `${emoji.arrow_up} Больше ${emoji.arrow_up}`,
+                            callback_data: `hilo_over_${chat_id}`,
                         }], [{
-                            text: '🔽Меньше🔽',
-                            callback_data: `hilo_less_${chat_id}`
+                            text: `${emoji.arrow_down} Меньше ${emoji.arrow_down}`,
+                            callback_data: `hilo_less_${chat_id}`,
                         }]
                     ]
                 }
@@ -36,10 +37,9 @@ function hilo(bot) {
         const {chat: {id: chat_id}} = msg;
 
         if (getGameState(chat_id)) {
-            chatGame.delete(chat_id);
+            removeGameState(chat_id);
             bot.sendMessage(chat_id, 'Игра HiLo остановлена');
-        }
-        else {
+        } else {
             bot.sendMessage(chat_id, 'Игра не запущена');
         }
     });
@@ -48,10 +48,22 @@ function hilo(bot) {
         try {
             const {from: {id: user_id}, message: {message_id, chat: {id: chat_id}}, data} = query;
             const gameState = getGameState(chat_id);
-            if (!gameState) return false;
-            let messageText = '';
 
+            if (!gameState) return false;
             newStepGame(chat_id);
+            const messageWin = `${emoji.like}*Успех!* +10${emoji.money}\n\nНовое значение: *${gameState.currentNum}*\nПредыдущее значение: ${gameState.previousNum}`;
+            const messageLost = `${emoji.dislike}*Неудача* -10${emoji.money}\n\nНовое значение: *${gameState.currentNum}*\nПредыдущее значение: ${gameState.previousNum}`;
+            let messageState = {
+                chat_id: chat_id,
+                message_id: message_id,
+                parse_mode: 'markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{text: `${emoji.arrow_up} Больше ${emoji.arrow_up}`, callback_data: `hilo_over_${chat_id}`}],
+                        [{text: `${emoji.arrow_down} Меньше ${emoji.arrow_down}`, callback_data: `hilo_less_${chat_id}`}]
+                    ]
+                }
+            }
 
             const {currentNum, previousNum} = gameState;
 
@@ -59,48 +71,21 @@ function hilo(bot) {
                 case `hilo_over_${chat_id}`:
                     if (currentNum > previousNum) {
                         giveUserCoins(user_id, 10);
-                        messageText = `👍*Успех!* +10💰\n\nНовое значение: *${gameState.currentNum}* 🔼\nПредыдущее значение: ${gameState.previousNum}`;
-                    }
-                    else {
+                        bot.editMessageText(messageWin, messageState);
+                    } else {
                         takeUserCoins(user_id, 10);
-                        messageText = `👎*Неудача* -10💰\n\nНовое значение: *${gameState.currentNum}* 🔼\nПредыдущее значение: ${gameState.previousNum}`;
+                        bot.editMessageText(messageLost, messageState);
                     }
-
-                    bot.editMessageText(messageText, {
-                        chat_id: chat_id,
-                        message_id: message_id,
-                        parse_mode: 'markdown',
-                        reply_markup: {
-                            inline_keyboard: [
-                                [{text: '🔼Больше🔼', callback_data: `hilo_over_${chat_id}`}],
-                                [{text: '🔽Меньше🔽', callback_data: `hilo_less_${chat_id}`}]
-                            ]
-                        }
-                    });
                     break;
+
                 case `hilo_less_${chat_id}`:
                     if (currentNum < previousNum) {
                         giveUserCoins(user_id, 10);
-                        messageText = `👍*Успех!* +10💰\n\nНовое значение: *${gameState.currentNum}* 🔽\nПредыдущее значение: ${gameState.previousNum}`;
-                    }
-                    else {
+                        bot.editMessageText(messageWin, messageState);
+                    } else {
                         takeUserCoins(user_id, 10);
-                        messageText = `👎*Неудача* -10💰\n\nНовое значение: *${gameState.currentNum}* 🔽\nПредыдущее значение: ${gameState.previousNum}`;
+                        bot.editMessageText(messageLost, messageState);
                     }
-
-                    bot.editMessageText(messageText, {
-                        chat_id: chat_id,
-                        message_id: message_id,
-                        parse_mode: 'markdown',
-                        reply_markup: {
-                            inline_keyboard: [
-                                [{text: '🔼Больше🔼', callback_data: `hilo_over_${chat_id}`}],
-                                [{text: '🔽Меньше🔽', callback_data: `hilo_less_${chat_id}`}]
-                            ]
-                        }
-                    });
-                    break;
-                default:
                     break;
             }
         } catch (err) {

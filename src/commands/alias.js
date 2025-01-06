@@ -36,13 +36,10 @@ function aliasStart(bot) {
 
                 bot.sendMessage(chat_id, 'Нажмите кнопку, чтобы стать ведущим.', {
                     reply_markup: {
-                        inline_keyboard: [[{
-                            text: 'Стать ведущим',
-                            callback_data: `become_leader_${chat_id}`
-                        }], [{
-                            text: 'Правила',
-                            callback_data: 'rule'
-                        }]]
+                        inline_keyboard: [
+                            [{text: 'Стать ведущим', callback_data: `become_leader_${chat_id}`}],
+                            [{text: 'Правила', callback_data: 'rule'}]
+                        ]
                     }
                 });
             }
@@ -202,7 +199,9 @@ function aliasRating(bot) {
         try {
             const {chat: {id: chat_id}} = msg;
             bot.sendMessage(chat_id, getUserRatings(chat_id), {parse_mode: 'html'});
-        } catch (err) {console.error('[ERROR rating alias]', err.message)}
+        } catch (err) {
+            console.error('[ERROR rating alias]', err.message)
+        }
     });
 }
 
@@ -287,4 +286,4 @@ function getUserRatings(chatId) {
     }
 }
 
-module.exports = { aliasStart, aliasEnd, aliasRating, handleAliasMessage, handleAliasButton }
+module.exports = {aliasStart, aliasEnd, aliasRating, handleAliasMessage, handleAliasButton, getRandomWord, isWordInMessage}
